@@ -113,7 +113,7 @@
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import {mapState} from "vuex";
     import ForEachStatus from "../executions/ForEachStatus.vue";
-    import TaskRunLine from "../executions/TaskRunLine.vue";
+    import BasicTaskRunLine from "override/components/executions/TaskRunLine.vue";
     import FlowUtils from "../../utils/flowUtils";
     import throttle from "lodash/throttle";
     import FilePreview from "../executions/FilePreview.vue";
@@ -125,7 +125,7 @@
         name: "TaskRunDetails",
         components: {
             FilePreview,
-            TaskRunLine,
+            TaskRunLine: BasicTaskRunLine,
             ForEachStatus,
             LogLine,
             DynamicScroller,

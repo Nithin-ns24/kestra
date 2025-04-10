@@ -1295,6 +1295,7 @@
       "move_right": "Move right",
       "move_left": "Move left",
       "close_all_tabs": "Close all tabs"
-    }
+    },
+    "worker information": "Worker Information"
   }
 }

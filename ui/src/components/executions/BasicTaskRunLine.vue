@@ -126,6 +126,13 @@
                     >
                         {{ $t("delete logs") }}
                     </el-dropdown-item>
+                    <el-dropdown-item
+                        v-if="displayWorkerInfo && hasWorkerId(currentTaskRun) !== null"
+                        :icon="Server"
+                        @click="loadWorkerInformation(currentTaskRun)"
+                    >
+                        {{ $t("worker information") }}
+                    </el-dropdown-item>
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
@@ -165,6 +172,7 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import Server from "vue-material-design-icons/Server.vue";
 </script>
 
 <script>
@@ -234,6 +242,10 @@
             filter: {
                 type: String,
                 default: ""
+            },
+            displayWorkerInfo: {
+                type: Boolean,
+                default: false
             }
         },
         computed: {
@@ -325,6 +337,21 @@
                     () => {}
                 )
 
+            },
+            hasWorkerId(currentTaskRun) {
+                return currentTaskRun.attempts?.find(attempt => attempt.workerId !== null) !== null;
+            },
+            loadWorkerInformation(currentTaskRun) {
+                const msg = currentTaskRun.attempts
+                    .map(attempt => attempt.workerId)
+                    .reduce(function(result, item) {
+                        return result + "\\n" + item
+                    })
+                this.$store.dispatch("core/showMessage", {
+                    variant: "information",
+                    title: this.$t("worker information"),
+                    message: msg,
+                });
             },
             forwardEvent(type, event) {
                 this.$emit(type, event);
