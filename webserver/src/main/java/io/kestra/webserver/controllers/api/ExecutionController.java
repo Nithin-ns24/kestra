@@ -101,8 +101,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static io.kestra.core.models.Label.CORRELATION_ID;
-import static io.kestra.core.models.Label.SYSTEM_PREFIX;
+import static io.kestra.core.models.Label.*;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -1735,14 +1734,15 @@ public class ExecutionController {
     @Post(uri = "/{executionId}/unqueue")
     @Operation(tags = {"Executions"}, summary = "Unqueue an execution")
     public Execution unqueue(
-        @Parameter(description = "The execution id") @PathVariable String executionId
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The new state of the execution") @Nullable @QueryValue State.Type status
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
             return null;
         }
 
-        Execution restart = concurrencyLimitService.unqueue(execution.get());
+        Execution restart = concurrencyLimitService.unqueue(execution.get(),status);
         executionQueue.emit(restart);
         eventPublisher.publishEvent(new CrudEvent<>(restart, execution.get(), CrudEventType.UPDATE));
 
@@ -1755,7 +1755,8 @@ public class ExecutionController {
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
     @ApiResponse(responseCode = "422", description = "Unqueued with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> unqueueByIds(
-        @Parameter(description = "The execution id") @Body List<String> executionsId
+        @Parameter(description = "The execution id") @Body List<String> executionsId,
+        @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type status
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1792,7 +1793,7 @@ public class ExecutionController {
             );
         }
         for (Execution execution : executions) {
-            Execution restart = concurrencyLimitService.unqueue(execution);
+            Execution restart = concurrencyLimitService.unqueue(execution,status);
             executionQueue.emit(restart);
             eventPublisher.publishEvent(new CrudEvent<>(restart, execution, CrudEventType.UPDATE));
         }
@@ -1817,13 +1818,14 @@ public class ExecutionController {
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type status
     ) throws Exception {
         validateTimeline(startDate, endDate);
 
         var ids = getExecutionIds(query, scope, namespace, flowId, startDate, endDate, timeRange, state, labels, triggerExecutionId, childFilter);
 
-        return unqueueByIds(ids);
+        return unqueueByIds(ids,status);
     }
 
     @ExecuteOn(TaskExecutors.IO)
