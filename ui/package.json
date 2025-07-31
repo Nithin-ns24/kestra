@@ -52,7 +52,7 @@
     "moment-timezone": "^0.5.48",
     "nprogress": "^0.2.0",
     "path-browserify": "^1.0.1",
-    "pdfjs-dist": "^5.1.91",
+    "pdfjs-dist": "^5.3.93",
     "posthog-js": "^1.236.1",
     "rapidoc": "^9.3.8",
     "shiki": "^3.2.2",
